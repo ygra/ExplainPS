@@ -2,20 +2,21 @@
 
 function Get-CommandExplanation {
     $cmdline = $args -join ' '
-    $tokens = [System.Management.Automation.PSParser]::Tokenize($cmdline, [ref]$null)
+    $tokens =
+        [System.Management.Automation.PSParser]::Tokenize($cmdline, [ref]$null)
 
     # Assume the first token is a command or alias
-    $command = Get-Command $tokens[0].Content -ErrorAction Stop
-    if ($command.CommandType -eq 'Alias') {
+    $command,$params = $tokens
+    $command = Get-Command $command.Content -ErrorAction Stop
+    while ($command.CommandType -eq 'Alias') {
         $command = $command.ReferencedCommand
     }
     # Retain only the arguments
-    $tokens = $tokens | Select-Object -Skip 1
     "Command: $command"
 
     # Group parameters and arguments (when applicable)
-    $parameters =
-        $tokens |
+    $parsedParameters =
+        $params |
         ForEach-Object {
             $currentParameter = $null
             $currentPosition = 0
@@ -62,7 +63,7 @@ function Get-CommandExplanation {
             }
         }
 
-    $parameters
+    $parsedParameters
 }
 
 New-Alias explain Get-CommandExplanation
