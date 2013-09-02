@@ -31,8 +31,17 @@ function Get-CommandExplanation {
                 if ($param.SwitchParameter -and !$switchParamWithArgument) {
                     New-Object PSObject -Property @{
                         Type = 'Switch'
+                        Name = $param.Name
                         Value = $true
-                    } | Select-Object Type,Value
+                        Position = -1
+                    } | Select-Object Type,Name,Position,Value
+                } else {
+                    $currentParameter = New-Object PSObject -Property @{
+                        Type = 'Named'
+                        Name = $param.Name
+                        Value = $null
+                        Position = -1
+                    } | Select-Object Type,Name,Position,Value
                 }
             }
             if ($_.Type -eq 'CommandArgument') {
@@ -40,13 +49,15 @@ function Get-CommandExplanation {
                     # This would be a positional parameter
                     New-Object PSObject -Property @{
                         Type = 'Positional'
+                        Name = $null
                         Position = $currentPosition
                         Value = $_.Content
-                    } | Select-Object Type,Position,Value
+                    } | Select-Object Type,Name,Position,Value
                     $currentPosition++
                 } else {
-                    
-                    $command
+                    $currentParameter.Value = $_.Content
+                    $currentParameter
+                    $currentParameter = $null
                 }
             }
         }
